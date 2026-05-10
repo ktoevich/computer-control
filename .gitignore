@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.env
+config.json
+build/
+dist/
+*.spec
+PC_Control_Bot.exe

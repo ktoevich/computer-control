@@ -1,0 +1,10 @@
+aiogram>=3.4.0
+psutil
+pyautogui
+Pillow
+pyperclip
+keyboard
+requests
+pycaw
+comtypes
+opencv-python
