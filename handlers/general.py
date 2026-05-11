@@ -16,6 +16,7 @@ async def start_cmd(message: Message):
         "/type <текст> - Напечатать текст\n"
         "/key <кнопка> - Нажать клавишу (например, enter, space, a)\n"
         "/hotkey <кл1> <кл2> - Нажать комбинацию (например, ctrl c)\n"
+        "/cameras - Список всех доступных камер\n"
     )
     await message.answer(
         welcome_text,
@@ -126,20 +127,4 @@ async def handle_hotkey(message: Message):
     else:
         await message.answer(f"❌ Ошибка: {result}")
 
-kb_commands = [
-    "📸 Скриншот", "ℹ️ Статус", "📋 Буфер обмена", "📁 Открыть проводник",
-    "🌐 Открыть браузер", "💡 Монитор выкл", "🔊 Громкость +", "🔉 Громкость -",
-    "🖥 Диспетчер задач", "⌨️ Win+D", "🧹 Очистить temp", "🔒 Заблокировать",
-    "🔄 Перезагрузить", "🔌 Выключить", "❌ Отмена выключения", "🔇 Мут",
-    "⏸ Пауза музыки", "⏭ Следующий трек", "⏮ Предыдущий трек",
-    "🧠 CPU", "💾 RAM", "🔋 Батарея", "🌐 IP ПК", "📂 Файловый менеджер",
-    "🔍 Поиск в браузере", "📷 Фото с камеры", "🎥 Видео с камеры"
-]
 
-@router.message(F.text & ~F.text.startswith('/') & ~F.text.in_(kb_commands))
-async def write_clipboard(message: Message):
-    success = pc_control.set_clipboard(message.text)
-    if success:
-        await message.answer("✅ Текст скопирован в буфер обмена ПК!")
-    else:
-        await message.answer("❌ Не удалось скопировать текст в буфер обмена.")

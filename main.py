@@ -6,24 +6,31 @@ from aiogram import Bot, Dispatcher, BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 
 import config
-from handlers import general, media, system, file_manager
+from handlers import general, media, system, file_manager, clipboard
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("bot.log", encoding="utf-8"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
 class AdminMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
         user = data.get("event_from_user")
         if not user:
-            print("DEBUG: Не удалось получить пользователя из события.")
+            logging.debug("DEBUG: Не удалось получить пользователя из события.")
             return
 
-        print(f"DEBUG: Получен запрос от пользователя {user.id}. Ожидается админ {config.ADMIN_ID}.")
+        logging.info(f"Получен запрос от пользователя {user.id}. Ожидается админ {config.ADMIN_ID}.")
         
         if user.id == config.ADMIN_ID:
-            print("DEBUG: Доступ разрешен. Передаем обработчику.")
+            logging.debug("Доступ разрешен. Передаем обработчику.")
             return await handler(event, data)
         else:
-            print("DEBUG: Доступ запрещен!")
+            logging.warning(f"Доступ запрещен для пользователя {user.id}!")
             if isinstance(event, Message):
                 await event.answer("Отказано в доступе. Этот бот является приватным.")
             elif isinstance(event, CallbackQuery):
@@ -42,17 +49,18 @@ async def main():
     dp.include_router(media.router)
     dp.include_router(system.router)
     dp.include_router(file_manager.router)
+    dp.include_router(clipboard.router)
 
-    print("Бот успешно запущен! Нажмите Ctrl+C для остановки.")
+    logging.info("Бот успешно запущен!")
     
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     except Exception as e:
-        print(f"Ошибка при запуске бота: {e}")
+        logging.error(f"Ошибка при запуске бота: {e}")
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        print("Бот остановлен.")
+        logging.info("Бот остановлен.")

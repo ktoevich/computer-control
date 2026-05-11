@@ -57,14 +57,38 @@ def set_clipboard(text):
     except Exception as e:
         return False
 
-def take_webcam_photo(path="webcam.png"):
+def get_available_cameras():
+    """Находит индексы всех доступных камер."""
+    import cv2
+    index = 0
+    arr = []
+    while index < 5: # Проверяем первые 5 индексов
+        cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)
+        if cap.read()[0]:
+            arr.append(index)
+        cap.release()
+        index += 1
+    return arr
+
+def take_webcam_photo(path="webcam.png", camera_index=None):
     try:
         import cv2
-        cap = cv2.VideoCapture(0)
+        
+        # Если индекс не указан, пробуем найти первый рабочий
+        if camera_index is None:
+            indices = get_available_cameras()
+            if not indices:
+                return None
+            camera_index = indices[0]
+            
+        cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
         if not cap.isOpened():
             return None
-        for _ in range(10):
+            
+        # Даем камере "прогреться" (настроить экспозицию)
+        for _ in range(15):
             cap.read()
+            
         ret, frame = cap.read()
         cap.release()
         if ret:
@@ -74,18 +98,25 @@ def take_webcam_photo(path="webcam.png"):
     except Exception:
         return None
 
-def record_webcam_video(path="webcam_video.mp4", duration=10):
+def record_webcam_video(path="webcam_video.mp4", duration=10, camera_index=None):
     try:
         import cv2
         import time
-        cap = cv2.VideoCapture(0)
+        
+        if camera_index is None:
+            indices = get_available_cameras()
+            if not indices:
+                return None
+            camera_index = indices[0]
+            
+        cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
         if not cap.isOpened():
             return None
         
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = cap.get(cv2.CAP_PROP_FPS)
-        if fps == 0.0 or fps < 0:
+        if fps <= 0:
             fps = 20.0
             
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -136,7 +167,14 @@ def volume_mute():
     keyboard.send("volume mute")
 
 def win_d():
-    keyboard.send("windows+d")
+    try:
+        import comtypes.client
+        shell = comtypes.client.CreateObject("Shell.Application")
+        shell.ToggleDesktop()
+    except Exception:
+        # Fallback to pyautogui if comtypes fails
+        import pyautogui
+        pyautogui.hotkey('win', 'd')
 
 def open_explorer():
     subprocess.Popen('explorer')
@@ -158,12 +196,6 @@ def open_application(app_name_or_path):
     except Exception as e:
         return str(e)
 
-def type_text(text):
-    try:
-        pyautogui.write(text, interval=0.05)
-        return True
-    except Exception as e:
-        return str(e)
 
 def press_key(key):
     try:
@@ -175,6 +207,20 @@ def press_key(key):
 def press_hotkey(*keys):
     try:
         pyautogui.hotkey(*keys)
+        return True
+    except Exception as e:
+        return str(e)
+
+def alt_tab():
+    try:
+        pyautogui.hotkey('alt', 'tab')
+        return True
+    except Exception as e:
+        return str(e)
+
+def type_text(text):
+    try:
+        pyautogui.write(text, interval=0.01)
         return True
     except Exception as e:
         return str(e)
